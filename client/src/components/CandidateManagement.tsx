@@ -39,12 +39,12 @@ const CandidateManagement = () => {
       return firebaseService.getCandidatesWithVotes();
     }
   });
-  
+
   // Estado para los diálogos de reinicio
   const [isResetElectionDialogOpen, setIsResetElectionDialogOpen] = useState(false);
   const [isResetCandidatesDialogOpen, setIsResetCandidatesDialogOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  
+
   // Función para reiniciar elecciones (eliminar votos)
   const handleResetElection = async () => {
     try {
@@ -75,7 +75,7 @@ const CandidateManagement = () => {
       setIsResetElectionDialogOpen(false);
     }
   };
-  
+
   // Función para eliminar todas las candidatas
   const handleResetCandidates = async () => {
     try {
@@ -230,13 +230,13 @@ const CandidateManagement = () => {
     <Card className="bg-white rounded-lg shadow mb-6">
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold text-primary font-sans mb-4">Candidate Management</h3>
-        
+
         {/* Add/Edit Candidate Form */}
         <div className="add-candidate-form mb-8 border-b pb-6">
           <h4 className="font-semibold text-primary mb-3">
             {editingCandidate ? "Edit Candidate" : "Add New Candidate"}
           </h4>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
@@ -256,7 +256,7 @@ const CandidateManagement = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="grade"
@@ -274,17 +274,27 @@ const CandidateManagement = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="9">Grade 9</SelectItem>
-                        <SelectItem value="10">Grade 10</SelectItem>
-                        <SelectItem value="11">Grade 11</SelectItem>
-                        <SelectItem value="12">Grade 12</SelectItem>
+                        <SelectItem value="1">Tercero Técnico</SelectItem>
+                        <SelectItem value="2">Segundo Técnico</SelectItem>
+                        <SelectItem value="3">Primero General A</SelectItem>
+                        <SelectItem value="4">Primero General B</SelectItem>
+                        <SelectItem value="5">Segundo General A</SelectItem>
+                        <SelectItem value="6">Segundo General B</SelectItem>
+                        <SelectItem value="7">Noveno Grado A</SelectItem>
+                        <SelectItem value="8">Noveno Grado B</SelectItem>
+                        <SelectItem value="9">Octavo Grado A</SelectItem>
+                        <SelectItem value="10">Octavo Grado B</SelectItem>
+                        <SelectItem value="11">Séptimo Grado A</SelectItem>
+                        <SelectItem value="12">Séptimo Grado B</SelectItem>
+                        <SelectItem value="13">Sexto Grado A</SelectItem>
+                        <SelectItem value="14">Sexto Grado B</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="description"
@@ -303,7 +313,7 @@ const CandidateManagement = () => {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="photoUrl"
@@ -326,7 +336,7 @@ const CandidateManagement = () => {
                   </FormItem>
                 )}
               />
-              
+
               <div className="flex items-end gap-2 mt-4">
                 <Button 
                   type="submit"
@@ -337,7 +347,7 @@ const CandidateManagement = () => {
                     ? (updateCandidateMutation.isPending ? "Updating..." : "Update Candidate") 
                     : (addCandidateMutation.isPending ? "Adding..." : "Add Candidate")}
                 </Button>
-                
+
                 {editingCandidate && (
                   <Button 
                     type="button" 
@@ -354,7 +364,7 @@ const CandidateManagement = () => {
             </form>
           </Form>
         </div>
-        
+
         {/* Admin Actions */}
         <div className="admin-actions mb-6 flex gap-4 justify-end">
           <Button
@@ -365,7 +375,7 @@ const CandidateManagement = () => {
             <RefreshCw className="h-4 w-4 mr-2" />
             Reiniciar Votación
           </Button>
-          
+
           <Button
             variant="outline" 
             className="border-red-600 text-red-600 hover:bg-red-50"
@@ -375,12 +385,12 @@ const CandidateManagement = () => {
             Eliminar Todas las Candidatas
           </Button>
         </div>
-        
+
         {/* Candidate List */}
         <div className="candidate-management">
           <h4 className="font-semibold text-primary mb-3">Manage Existing Candidates</h4>
-          
-          {isLoading ? (
+
+          {false ? (
             <div className="space-y-4">
               {Array(3).fill(0).map((_, index) => (
                 <div key={index} className="flex items-center justify-between p-3 border-b">
@@ -448,7 +458,7 @@ const CandidateManagement = () => {
             </div>
           )}
         </div>
-        
+
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
@@ -471,6 +481,52 @@ const CandidateManagement = () => {
                 disabled={deleteCandidateMutation.isPending}
               >
                 {deleteCandidateMutation.isPending ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Reset Election Confirmation Dialog */}
+        <AlertDialog open={isResetElectionDialogOpen} onOpenChange={setIsResetElectionDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Reiniciar la votación?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción eliminará todos los votos actuales, pero mantendrá las candidatas.
+                El conteo de votos se reiniciará a cero. Esta acción no se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-yellow-600 text-white hover:bg-yellow-700"
+                onClick={handleResetElection}
+                disabled={isResetting}
+              >
+                {isResetting ? "Reiniciando..." : "Sí, reiniciar votación"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Reset Candidates Confirmation Dialog */}
+        <AlertDialog open={isResetCandidatesDialogOpen} onOpenChange={setIsResetCandidatesDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar todas las candidatas?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción eliminará permanentemente todas las candidatas y sus votos asociados.
+                Tendrá que añadir nuevamente todas las candidatas. Esta acción no se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-red-600 text-white hover:bg-red-700"
+                onClick={handleResetCandidates}
+                disabled={isResetting}
+              >
+                {isResetting ? "Eliminando..." : "Sí, eliminar todo"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -5,6 +5,24 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as firebaseService from "@/lib/firebaseService";
 
+const gradeNames: Record<number, string> = {
+  1: "Tercero Técnico",
+  2: "Segundo Técnico",
+  3: "Primero General A",
+  4: "Primero General B",
+  5: "Primero General C",
+  6: "Segundo General A",
+  7: "Segundo General B",
+  8: "Noveno Grado A",
+  9: "Noveno Grado B",
+  10: "Octavo Grado A",
+  11: "Octavo Grado B",
+  12: "Séptimo Grado A",
+  13: "Séptimo Grado B",
+  14: "Sexto Grado A",
+  15: "Sexto Grado B",
+};
+
 const ResultsSection = () => {
   const { data: results, isLoading: isLoadingResults } = useQuery({
     queryKey: ['/api/results'],
@@ -12,7 +30,7 @@ const ResultsSection = () => {
       return firebaseService.getCandidatesWithVotes();
     }
   });
-  
+
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['/api/stats'],
     queryFn: async () => {
@@ -43,7 +61,7 @@ const ResultsSection = () => {
     },
     enabled: !!results
   });
-  
+
   // Calculate total votes
   const totalVotes = results?.reduce((sum: number, candidate: CandidateWithVotes) => sum + candidate.votes, 0) || 0;
 
@@ -55,7 +73,7 @@ const ResultsSection = () => {
             <h3 className="text-lg font-semibold text-primary font-sans">Live Voting Results</h3>
             <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Updating live</span>
           </div>
-          
+
           <div className="results-graph space-y-6">
             {isLoadingResults ? (
               Array(3).fill(0).map((_, index) => (
@@ -76,7 +94,7 @@ const ResultsSection = () => {
             ) : (
               results?.map((candidate: CandidateWithVotes) => {
                 const votePercentage = totalVotes > 0 ? Math.round((candidate.votes / totalVotes) * 100) : 0;
-                
+
                 return (
                   <div key={candidate.id} className="result-item">
                     <div className="flex items-center mb-2">
@@ -89,7 +107,7 @@ const ResultsSection = () => {
                         <div className="flex items-center">
                           <h4 className="font-semibold text-primary">{candidate.name}</h4>
                           <span className="grade-pill ml-2 text-xs bg-primary text-white rounded-2xl px-2 py-0.5">
-                            Grade {candidate.grade}
+                          {gradeNames[candidate.grade]}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-600">
@@ -108,7 +126,7 @@ const ResultsSection = () => {
                 );
               })
             )}
-            
+
             <div className="total-votes mt-8 border-t pt-4">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Total Votes:</span>
@@ -118,7 +136,7 @@ const ResultsSection = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <div className="statistics-section grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {isLoadingStats ? (
           Array(3).fill(0).map((_, index) => (
@@ -132,39 +150,6 @@ const ResultsSection = () => {
           ))
         ) : (
           <>
-            <Card className="bg-white rounded-lg shadow">
-              <CardContent className="p-4">
-                <h4 className="text-sm font-semibold text-gray-500 mb-1">Total Voters</h4>
-                <p className="text-3xl font-bold text-primary">{stats?.totalVoters || 0}</p>
-                <p className="text-xs text-gray-500">
-                  Out of {stats?.eligibleVoters || 0} eligible students
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white rounded-lg shadow">
-              <CardContent className="p-4">
-                <h4 className="text-sm font-semibold text-gray-500 mb-1">Most Active Grade</h4>
-                <p className="text-3xl font-bold text-primary">
-                  Grade {stats?.mostActiveGrade?.grade || '-'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {stats?.mostActiveGrade?.participationRate
-                    ? `${Math.round(stats.mostActiveGrade.participationRate * 100)}% participation rate`
-                    : 'No votes recorded yet'}
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-white rounded-lg shadow">
-              <CardContent className="p-4">
-                <h4 className="text-sm font-semibold text-gray-500 mb-1">Time Remaining</h4>
-                <p className="text-3xl font-bold text-[#FF69B4]">{stats?.timeRemaining?.days || 0} days</p>
-                <p className="text-xs text-gray-500">
-                  Voting closes on {stats?.timeRemaining?.closingDate || 'N/A'}
-                </p>
-              </CardContent>
-            </Card>
           </>
         )}
       </div>

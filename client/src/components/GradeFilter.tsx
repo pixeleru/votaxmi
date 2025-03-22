@@ -6,8 +6,8 @@ interface GradeFilterProps {
 }
 
 const GradeFilter = ({ selectedGrade, onGradeChange }: GradeFilterProps) => {
-  const grades = [null, 9, 10, 11, 12];
-  
+  const grades = [null, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]; // Incluye los nuevos grados
+
   return (
     <div className="filter-section bg-gray-50 rounded-lg p-4 mb-6">
       <h3 className="text-lg font-semibold mb-3 text-primary font-sans">Filter Candidates</h3>

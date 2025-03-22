@@ -110,30 +110,20 @@ const StudentVoting = () => {
             value="student"
             className="py-4 px-4 font-sans text-sm md:text-base data-[state=active]:border-b-[3px] data-[state=active]:border-[#FF69B4] data-[state=active]:text-primary data-[state=active]:font-semibold"
           >
-            Votación Estudiantil
-          </TabsTrigger>
-          <TabsTrigger 
-            value="judge"
-            className="py-4 px-4 font-sans text-sm md:text-base text-gray-500 disabled:opacity-50"
-            onClick={() => window.location.href = "/judge"}
-          >
-            Panel de Jueces
+            Inicio
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="student" className="mt-6">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-primary font-sans">Votación para Reina Escolar</h2>
             <p className="text-gray-600 mb-6">Selecciona tu candidata favorita. Solo puedes votar una vez, ¡así que elige sabiamente!</p>
-            
+
             {hasVoted && (
               <div className="mb-4 p-4 bg-green-100 text-green-800 border border-green-200 rounded-md">
                 ¡Ya has votado! Gracias por tu participación.
               </div>
             )}
-            
-            <GradeFilter selectedGrade={selectedGrade} onGradeChange={setSelectedGrade} />
-            
+
             {isLoadingCandidates ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -176,14 +166,14 @@ const StudentVoting = () => {
             onVote={handleVote}
             hasVoted={hasVoted}
           />
-          
+
           <VoteConfirmationModal
             candidate={selectedCandidate}
             isOpen={isVoteConfirmationOpen}
             onClose={() => setIsVoteConfirmationOpen(false)}
             onConfirm={handleConfirmVote}
           />
-          
+
           <VoteSuccessModal
             isOpen={isVoteSuccessOpen}
             onClose={() => setIsVoteSuccessOpen(false)}

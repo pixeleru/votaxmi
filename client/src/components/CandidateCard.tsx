@@ -9,6 +9,24 @@ interface CandidateCardProps {
   hasVoted: boolean;
 }
 
+const gradeNames: Record<number, string> = {
+  1: "Tercero Técnico",
+  2: "Segundo Técnico",
+  3: "Primero General A",
+  4: "Primero General B",
+  5: "Primero General C",
+  6: "Segundo General A",
+  7: "Segundo General B",
+  8: "Noveno Grado A",
+  9: "Noveno Grado B",
+  10: "Octavo Grado A",
+  11: "Octavo Grado B",
+  12: "Séptimo Grado A",
+  13: "Séptimo Grado B",
+  14: "Sexto Grado A",
+  15: "Sexto Grado B",
+};
+
 const CandidateCard = ({ candidate, onViewDetails, onVote, hasVoted }: CandidateCardProps) => {
   return (
     <Card className="candidate-card bg-white rounded-lg overflow-hidden shadow transition-all hover:shadow-lg hover:-translate-y-1">
@@ -19,7 +37,7 @@ const CandidateCard = ({ candidate, onViewDetails, onVote, hasVoted }: Candidate
           className="w-full h-64 object-cover"
         />
         <span className="grade-pill absolute top-3 right-3 bg-primary text-white rounded-2xl px-2 py-0.5 text-xs">
-          Grade {candidate.grade}
+        {gradeNames[candidate.grade]}
         </span>
       </div>
       <CardContent className="p-4">
@@ -34,13 +52,6 @@ const CandidateCard = ({ candidate, onViewDetails, onVote, hasVoted }: Candidate
             }`}
           >
             {hasVoted ? "Vote Recorded" : "Cast Your Vote"}
-          </Button>
-          <Button 
-            variant="link" 
-            onClick={() => onViewDetails(candidate)}
-            className="text-primary text-sm underline"
-          >
-            View Details
           </Button>
         </div>
       </CardContent>
