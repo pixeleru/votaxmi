@@ -46,40 +46,12 @@ export class MemStorage implements IStorage {
     this.candidateIdCounter = 1;
     this.voteIdCounter = 1;
     
-    // Add some initial test data
-    this.createUser({
-      username: "student1",
-      password: "password123",
-      role: "student",
-      displayName: "Student One"
-    });
-    
+    // Añadir solo usuario juez para acceso al panel
     this.createUser({
       username: "judge1",
-      password: "judge123",
+      password: "juez123",
       role: "judge",
-      displayName: "Judge One"
-    });
-    
-    this.createCandidate({
-      name: "Sarah Johnson",
-      grade: 10,
-      description: "Passionate about student leadership and community service",
-      photoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=350&q=80"
-    });
-    
-    this.createCandidate({
-      name: "Emily Chen",
-      grade: 12,
-      description: "Debate club president with a passion for public speaking",
-      photoUrl: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=350&q=80"
-    });
-    
-    this.createCandidate({
-      name: "Madison Taylor",
-      grade: 11,
-      description: "Captain of the volleyball team and honor roll student",
-      photoUrl: "https://images.unsplash.com/photo-1499952127939-9bbf5af6c51c?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&h=350&q=80"
+      displayName: "Juez"
     });
   }
 
@@ -97,8 +69,11 @@ export class MemStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.userIdCounter++;
     const user: User = { 
-      ...insertUser, 
       id, 
+      username: insertUser.username,
+      password: insertUser.password,
+      role: insertUser.role || "student", // Aseguramos que role nunca sea undefined
+      displayName: insertUser.displayName || null,
       hasVoted: false 
     };
     this.users.set(id, user);
@@ -155,10 +130,15 @@ export class MemStorage implements IStorage {
   // Vote methods
   async createVote(insertVote: InsertVote): Promise<Vote> {
     const id = this.voteIdCounter++;
+    // Usar el timestamp del input o crear uno nuevo
+    const timestamp = typeof insertVote.timestamp === 'string' 
+      ? new Date(insertVote.timestamp) 
+      : new Date();
+    
     const vote: Vote = { 
       ...insertVote, 
       id, 
-      timestamp: new Date() 
+      timestamp 
     };
     this.votes.set(id, vote);
     return vote;
