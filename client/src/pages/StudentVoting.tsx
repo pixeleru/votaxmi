@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import CandidateCard from "@/components/CandidateCard";
 import CandidateDetailsModal from "@/components/CandidateDetailsModal";
@@ -10,10 +9,17 @@ import GradeFilter from "@/components/GradeFilter";
 import { Candidate } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { queryClient } from "@/lib/queryClient";
 
 const StudentVoting = () => {
-  const { user } = useAuth();
   const { toast } = useToast();
+  const [hasVoted, setHasVoted] = useState(false);
+
+  // Check if the user has already voted using localStorage
+  useEffect(() => {
+    const voted = localStorage.getItem('hasVoted') === 'true';
+    setHasVoted(voted);
+  }, []);
 
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
@@ -24,7 +30,42 @@ const StudentVoting = () => {
   // Fetch candidates
   const { data: candidates, isLoading: isLoadingCandidates } = useQuery({
     queryKey: [selectedGrade ? `/api/candidates?grade=${selectedGrade}` : '/api/candidates'],
-    enabled: !!user,
+  });
+
+  // Vote mutation
+  const voteMutation = useMutation({
+    mutationFn: async (candidateId: number) => {
+      const response = await fetch('/api/votes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          candidateId,
+          // Using a temporary user ID since we're not requiring login
+          userId: Date.now() // Generate a unique ID based on timestamp
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to cast vote');
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      // Mark as voted in localStorage
+      localStorage.setItem('hasVoted', 'true');
+      setHasVoted(true);
+      queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Vote failed",
+        description: error instanceof Error ? error.message : "Failed to cast your vote",
+        variant: "destructive",
+      });
+    }
   });
 
   const handleViewDetails = (candidate: Candidate) => {
@@ -33,19 +74,10 @@ const StudentVoting = () => {
   };
 
   const handleVote = (candidate: Candidate) => {
-    if (!user) {
+    if (hasVoted) {
       toast({
-        title: "Authentication required",
-        description: "Please login to vote",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (user.hasVoted) {
-      toast({
-        title: "Already voted",
-        description: "You have already cast your vote",
+        title: "Ya has votado",
+        description: "Solo puedes votar una vez",
         variant: "destructive",
       });
       return;
@@ -53,6 +85,14 @@ const StudentVoting = () => {
 
     setSelectedCandidate(candidate);
     setIsVoteConfirmationOpen(true);
+  };
+
+  const handleConfirmVote = () => {
+    if (selectedCandidate) {
+      voteMutation.mutate(selectedCandidate.id);
+      setIsVoteConfirmationOpen(false);
+      setIsVoteSuccessOpen(true);
+    }
   };
 
   return (
@@ -63,21 +103,27 @@ const StudentVoting = () => {
             value="student"
             className="py-4 px-4 font-sans text-sm md:text-base data-[state=active]:border-b-[3px] data-[state=active]:border-[#FF69B4] data-[state=active]:text-primary data-[state=active]:font-semibold"
           >
-            Student Voting
+            Votación Estudiantil
           </TabsTrigger>
           <TabsTrigger 
             value="judge"
-            disabled={!user || user.role !== "judge"}
             className="py-4 px-4 font-sans text-sm md:text-base text-gray-500 disabled:opacity-50"
+            onClick={() => window.location.href = "/judge"}
           >
-            Judge Panel
+            Panel de Jueces
           </TabsTrigger>
         </TabsList>
         
         <TabsContent value="student" className="mt-6">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-primary font-sans">Vote for School Queen</h2>
-            <p className="text-gray-600 mb-6">Select your favorite candidate. You can only vote once, so choose wisely!</p>
+            <h2 className="text-2xl font-bold mb-4 text-primary font-sans">Votación para Reina Escolar</h2>
+            <p className="text-gray-600 mb-6">Selecciona tu candidata favorita. Solo puedes votar una vez, ¡así que elige sabiamente!</p>
+            
+            {hasVoted && (
+              <div className="mb-4 p-4 bg-green-100 text-green-800 border border-green-200 rounded-md">
+                ¡Ya has votado! Gracias por tu participación.
+              </div>
+            )}
             
             <GradeFilter selectedGrade={selectedGrade} onGradeChange={setSelectedGrade} />
             
@@ -105,7 +151,7 @@ const StudentVoting = () => {
                     candidate={candidate}
                     onViewDetails={handleViewDetails}
                     onVote={handleVote}
-                    hasVoted={user?.hasVoted || false}
+                    hasVoted={hasVoted}
                   />
                 ))}
               </div>
@@ -121,17 +167,14 @@ const StudentVoting = () => {
             isOpen={isDetailsModalOpen}
             onClose={() => setIsDetailsModalOpen(false)}
             onVote={handleVote}
-            hasVoted={user?.hasVoted || false}
+            hasVoted={hasVoted}
           />
           
           <VoteConfirmationModal
             candidate={selectedCandidate}
             isOpen={isVoteConfirmationOpen}
             onClose={() => setIsVoteConfirmationOpen(false)}
-            onConfirm={() => {
-              setIsVoteConfirmationOpen(false);
-              setIsVoteSuccessOpen(true);
-            }}
+            onConfirm={handleConfirmVote}
           />
           
           <VoteSuccessModal
