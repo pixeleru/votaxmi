@@ -71,27 +71,43 @@ export const getCandidate = async (id: number): Promise<Candidate | null> => {
 
 export const createCandidate = async (candidate: InsertCandidate): Promise<Candidate> => {
   try {
-    const docRef = await addDoc(candidatesCollection, candidate);
+    console.log("Intentando crear candidato:", candidate);
+    // Crear un objeto nuevo con los campos exactos para evitar campos no válidos
+    const cleanCandidate = {
+      name: candidate.name,
+      grade: candidate.grade,
+      description: candidate.description,
+      photoUrl: candidate.photoUrl
+    };
+    
+    const docRef = await addDoc(candidatesCollection, cleanCandidate);
+    console.log("Candidato creado con ID:", docRef.id);
+    
     return {
       id: parseInt(docRef.id),
-      ...candidate
+      ...cleanCandidate
     } as Candidate;
   } catch (error) {
     console.error("Error adding candidate:", error);
     // Fallback to API if Firebase fails
-    const response = await fetch('/api/admin/candidates', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(candidate),
-    });
-    
-    if (!response.ok) {
-      throw new Error('Failed to create candidate');
+    try {
+      const response = await fetch('/api/admin/candidates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(candidate),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create candidate');
+      }
+      
+      return response.json();
+    } catch (fallbackError) {
+      console.error("Fallback también falló:", fallbackError);
+      throw new Error('No se pudo crear el candidato: ' + (error instanceof Error ? error.message : 'Error desconocido'));
     }
-    
-    return response.json();
   }
 };
 
