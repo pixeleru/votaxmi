@@ -7,15 +7,21 @@ const candidatesRef = ref(db, "candidates");
 const votesRef = ref(db, "votes");
 
 // Función auxiliar para convertir los datos de Firebase a array
-const firebaseToArray = (snapshot, idField = 'id') => {
-  const result = [];
-  if (snapshot.exists()) {
-    Object.entries(snapshot.val()).forEach(([key, value]) => {
-      result.push({
-        [idField]: parseInt(key),
-        ...value
+const firebaseToArray = <T>(snapshot: any, idField = 'id'): T[] => {
+  const result: T[] = [];
+  if (snapshot && snapshot.exists()) {
+    const data = snapshot.val();
+    if (data) {
+      Object.entries(data).forEach(([key, value]) => {
+        // Asegurarnos de que value es un objeto antes de hacer spread
+        if (typeof value === 'object' && value !== null) {
+          result.push({
+            [idField]: Number(key) || key,
+            ...(value as object)
+          } as unknown as T);
+        }
       });
-    });
+    }
   }
   return result;
 };
@@ -25,7 +31,7 @@ export const getCandidates = async (): Promise<Candidate[]> => {
   try {
     console.log("Obteniendo candidatas desde Firebase Realtime DB");
     const snapshot = await get(candidatesRef);
-    return firebaseToArray(snapshot);
+    return firebaseToArray<Candidate>(snapshot);
   } catch (error) {
     console.error("Error getting candidates:", error);
     // Fallback to API if Firebase fails
@@ -46,7 +52,7 @@ export const getCandidatesByGrade = async (grade: number): Promise<Candidate[]> 
   try {
     const candidatesQuery = query(candidatesRef, orderByChild("grade"), equalTo(grade));
     const snapshot = await get(candidatesQuery);
-    return firebaseToArray(snapshot);
+    return firebaseToArray<Candidate>(snapshot);
   } catch (error) {
     console.error("Error getting candidates by grade:", error);
     // Fallback to API if Firebase fails
@@ -105,9 +111,9 @@ export const createCandidate = async (candidate: InsertCandidate): Promise<Candi
       photoUrl: candidate.photoUrl || ""
     };
     
-    // Usar push para generar un nuevo ID único
-    const newCandidateRef = push(candidatesRef);
-    const newId = parseInt(newCandidateRef.key.split("-")[1] || new Date().getTime().toString());
+    // Crear un ID numérico basado en timestamp
+    const timestamp = new Date().getTime();
+    const newId = timestamp;
     
     // Guardar con el ID numérico como clave
     await set(ref(db, `candidates/${newId}`), cleanCandidate);
@@ -219,9 +225,9 @@ export const createVote = async (vote: InsertVote): Promise<Vote> => {
       timestamp: new Date().toISOString()
     };
     
-    // Use push to generate a unique ID
-    const newVoteRef = push(votesRef);
-    const newId = parseInt(newVoteRef.key.split("-")[1] || new Date().getTime().toString());
+    // Crear un ID numérico basado en timestamp
+    const timestamp = new Date().getTime();
+    const newId = timestamp;
     
     // Save with numerical ID as key
     await set(ref(db, `votes/${newId}`), voteData);
@@ -259,7 +265,7 @@ export const getVotesByCandidate = async (candidateId: number): Promise<Vote[]> 
   try {
     const votesQuery = query(votesRef, orderByChild("candidateId"), equalTo(candidateId));
     const snapshot = await get(votesQuery);
-    return firebaseToArray(snapshot);
+    return firebaseToArray<Vote>(snapshot);
   } catch (error) {
     console.error("Error getting votes by candidate:", error);
     // Fall back to API if Firebase fails
