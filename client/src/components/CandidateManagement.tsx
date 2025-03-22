@@ -5,6 +5,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { type Candidate, type InsertCandidate, insertCandidateSchema } from "@shared/schema";
 import { z } from "zod";
+import * as firebaseService from "@/lib/firebaseService";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,7 +34,10 @@ const CandidateManagement = () => {
 
   // Fetch candidates
   const { data: candidates, isLoading } = useQuery({
-    queryKey: ['/api/results']
+    queryKey: ['/api/results'],
+    queryFn: async () => {
+      return firebaseService.getCandidatesWithVotes();
+    }
   });
 
   // Form handling
@@ -72,7 +76,7 @@ const CandidateManagement = () => {
   // Add candidate mutation
   const addCandidateMutation = useMutation({
     mutationFn: async (candidate: InsertCandidate) => {
-      return await apiRequest("POST", "/api/admin/candidates", candidate);
+      return await firebaseService.createCandidate(candidate);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
@@ -95,7 +99,7 @@ const CandidateManagement = () => {
   // Update candidate mutation
   const updateCandidateMutation = useMutation({
     mutationFn: async ({ id, candidate }: { id: number; candidate: Partial<InsertCandidate> }) => {
-      return await apiRequest("PUT", `/api/admin/candidates/${id}`, candidate);
+      return await firebaseService.updateCandidate(id, candidate);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
@@ -119,7 +123,7 @@ const CandidateManagement = () => {
   // Delete candidate mutation
   const deleteCandidateMutation = useMutation({
     mutationFn: async (id: number) => {
-      return await apiRequest("DELETE", `/api/admin/candidates/${id}`);
+      return await firebaseService.deleteCandidate(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });

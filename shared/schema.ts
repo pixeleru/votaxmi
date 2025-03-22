@@ -46,6 +46,8 @@ export const votes = pgTable("votes", {
 export const insertVoteSchema = createInsertSchema(votes).pick({
   userId: true,
   candidateId: true,
+}).extend({
+  timestamp: z.string().optional(),
 });
 
 // Export types
