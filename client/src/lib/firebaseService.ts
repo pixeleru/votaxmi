@@ -10,14 +10,14 @@ const votesRef = ref(db, "votes");
 // Función auxiliar para convertir los datos de Firebase a array
 const firebaseToArray = <T>(snapshot: any, idField = 'id'): T[] => {
   const result: T[] = [];
-  
+
   console.log("Procesando firebaseToArray, ¿snapshot existe?", snapshot !== null);
   console.log("¿snapshot.exists()?", snapshot && snapshot.exists ? snapshot.exists() : "no existe método");
-  
+
   if (snapshot && snapshot.exists && snapshot.exists()) {
     const data = snapshot.val();
     console.log("Datos recibidos de Firebase:", data);
-    
+
     if (data) {
       Object.entries(data).forEach(([key, value]) => {
         console.log(`Procesando entrada con key=${key}`, value);
@@ -27,7 +27,7 @@ const firebaseToArray = <T>(snapshot: any, idField = 'id'): T[] => {
             [idField]: Number(key) || key,
             ...(value as object)
           } as unknown as T;
-          
+
           console.log("Ítem procesado:", item);
           result.push(item);
         }
@@ -38,7 +38,7 @@ const firebaseToArray = <T>(snapshot: any, idField = 'id'): T[] => {
     console.log("Intentando obtener datos directamente de snapshot.val()...");
     try {
       const directData = snapshot && snapshot.val ? snapshot.val() : null;
-      
+
       if (directData && typeof directData === 'object') {
         console.log("Datos obtenidos directamente:", directData);
         Object.entries(directData).forEach(([key, value]) => {
@@ -47,7 +47,7 @@ const firebaseToArray = <T>(snapshot: any, idField = 'id'): T[] => {
               [idField]: Number(key) || key,
               ...(value as object)
             } as unknown as T;
-            
+
             console.log("Ítem procesado (método alternativo):", item);
             result.push(item);
           }
@@ -57,7 +57,7 @@ const firebaseToArray = <T>(snapshot: any, idField = 'id'): T[] => {
       console.error("Error al procesar datos directamente:", error);
     }
   }
-  
+
   console.log("Resultado final de firebaseToArray:", result);
   return result;
 };
@@ -109,7 +109,7 @@ export const getCandidate = async (id: number): Promise<Candidate | null> => {
   try {
     const candidateRef = ref(db, `candidates/${id}`);
     const snapshot = await get(candidateRef);
-    
+
     if (snapshot.exists()) {
       return {
         id,
@@ -138,7 +138,7 @@ export const getCandidate = async (id: number): Promise<Candidate | null> => {
 export const createCandidate = async (candidate: InsertCandidate): Promise<Candidate> => {
   try {
     console.log("Intentando crear candidata en Realtime Database:", candidate);
-    
+
     // Crear un objeto nuevo con los campos exactos para evitar campos no válidos
     const cleanCandidate = {
       name: candidate.name,
@@ -146,16 +146,16 @@ export const createCandidate = async (candidate: InsertCandidate): Promise<Candi
       description: candidate.description,
       photoUrl: candidate.photoUrl || ""
     };
-    
+
     // Crear un ID numérico basado en timestamp
     const timestamp = new Date().getTime();
     const newId = timestamp;
-    
+
     // Guardar con el ID numérico como clave
     await set(ref(db, `candidates/${newId}`), cleanCandidate);
-    
+
     console.log("Candidata creada con ID:", newId);
-    
+
     return {
       id: newId,
       ...cleanCandidate
@@ -171,11 +171,11 @@ export const createCandidate = async (candidate: InsertCandidate): Promise<Candi
         },
         body: JSON.stringify(candidate),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to create candidate');
       }
-      
+
       return response.json();
     } catch (fallbackError) {
       console.error("Fallback también falló:", fallbackError);
@@ -187,10 +187,10 @@ export const createCandidate = async (candidate: InsertCandidate): Promise<Candi
 export const updateCandidate = async (id: number, candidate: Partial<InsertCandidate>): Promise<Candidate | null> => {
   try {
     const candidateRef = ref(db, `candidates/${id}`);
-    
+
     // Actualizar solo los campos proporcionados
     await update(candidateRef, candidate);
-    
+
     // Obtener el documento actualizado
     const snapshot = await get(candidateRef);
     if (snapshot.exists()) {
@@ -211,11 +211,11 @@ export const updateCandidate = async (id: number, candidate: Partial<InsertCandi
         },
         body: JSON.stringify(candidate),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update candidate');
       }
-      
+
       return response.json();
     } catch (err) {
       console.error("API fallback failed:", err);
@@ -236,11 +236,11 @@ export const deleteCandidate = async (id: number): Promise<boolean> => {
       const response = await fetch(`/api/admin/candidates/${id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to delete candidate');
       }
-      
+
       return true;
     } catch (err) {
       console.error("API fallback failed:", err);
@@ -249,50 +249,36 @@ export const deleteCandidate = async (id: number): Promise<boolean> => {
   }
 };
 
-// Votes
 export const createVote = async (vote: InsertVote): Promise<Vote> => {
   try {
+    // Verificar si el usuario ya ha votado
+    const userId = vote.userId; // Asegúrate de que `userId` sea único y consistente
+    const existingVoteRef = ref(db, `votes/${userId}`);
+    const existingVoteSnapshot = await get(existingVoteRef);
+
+    if (existingVoteSnapshot.exists()) {
+      throw new Error('Ya has votado.');
+    }
+
     // Store in localStorage that user has voted
     localStorage.setItem('hasVoted', 'true');
-    
+
     // Create new vote with timestamp
     const voteData = {
       ...vote,
       timestamp: new Date().toISOString()
     };
-    
-    // Crear un ID numérico basado en timestamp
-    const timestamp = new Date().getTime();
-    const newId = timestamp;
-    
-    // Save with numerical ID as key
-    await set(ref(db, `votes/${newId}`), voteData);
-    
+
+    // Save vote with userId as key
+    await set(existingVoteRef, voteData);
+
     return {
-      id: newId,
+      id: userId,
       ...voteData
     } as Vote;
   } catch (error) {
     console.error("Error adding vote:", error);
-    // Fallback to API if Firebase fails
-    try {
-      const response = await fetch('/api/votes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(vote),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create vote');
-      }
-      
-      return response.json();
-    } catch (err) {
-      console.error("API fallback failed:", err);
-      throw new Error('No se pudo registrar el voto');
-    }
+    throw error;
   }
 };
 
@@ -317,21 +303,24 @@ export const getVotesByCandidate = async (candidateId: number): Promise<Vote[]> 
   }
 };
 
-// Función para reiniciar las elecciones (eliminar todos los votos)
 export const resetElection = async (): Promise<boolean> => {
   try {
     console.log("Reiniciando elecciones - eliminando todos los votos...");
     await set(ref(db, "votes"), null); // Eliminar todos los votos
-    
-    // Eliminar el registro de voto local
-    localStorage.removeItem('hasVoted');
-    
+
+    // Eliminar todas las claves relacionadas con el estado de votación en localStorage
+    for (const key in localStorage) {
+      if (key.includes('hasVoted')) {
+        localStorage.removeItem(key);
+      }
+    }
+
     // Invalidar las consultas para actualizar la interfaz
     queryClient.invalidateQueries({ queryKey: ['/api/results'] });
     queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
     queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
     queryClient.invalidateQueries({ queryKey: ['/api/votes'] });
-    
+
     return true;
   } catch (error) {
     console.error("Error al reiniciar las elecciones:", error);
@@ -344,12 +333,12 @@ export const resetCandidates = async (): Promise<boolean> => {
   try {
     console.log("Eliminando todas las candidatas...");
     await set(ref(db, "candidates"), null); // Eliminar todas las candidatas
-    
+
     // Invalidar las consultas para actualizar la interfaz
     queryClient.invalidateQueries({ queryKey: ['/api/results'] });
     queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
     queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
-    
+
     return true;
   } catch (error) {
     console.error("Error al eliminar todas las candidatas:", error);
@@ -363,7 +352,7 @@ export const getCandidatesWithVotes = async () => {
     // Get all candidates
     const candidates = await getCandidates();
     console.log("getCandidatesWithVotes - candidates obtenidas:", candidates);
-    
+
     // Get votes for each candidate
     const candidatesWithVotes = await Promise.all(
       candidates.map(async (candidate) => {
@@ -374,7 +363,7 @@ export const getCandidatesWithVotes = async () => {
         };
       })
     );
-    
+
     console.log("candidatesWithVotes resultado:", candidatesWithVotes);
     return candidatesWithVotes;
   } catch (error) {

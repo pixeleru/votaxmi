@@ -24,6 +24,24 @@ const candidateFormSchema = insertCandidateSchema.extend({
   grade: z.string().min(1, "Please select a grade")
 });
 
+const gradeNames: Record<number, string> = {
+  1: "Tercero Técnico",
+  2: "Segundo Técnico",
+  3: "Primero General A",
+  4: "Primero General B",
+  5: "Primero General C",
+  6: "Segundo General A",
+  7: "Segundo General B",
+  8: "Noveno Grado A",
+  9: "Noveno Grado B",
+  10: "Octavo Grado A",
+  11: "Octavo Grado B",
+  12: "Séptimo Grado A",
+  13: "Séptimo Grado B",
+  14: "Sexto Grado A",
+  15: "Sexto Grado B",
+};
+
 type CandidateFormValues = z.infer<typeof candidateFormSchema>;
 
 const CandidateManagement = () => {
@@ -278,16 +296,15 @@ const CandidateManagement = () => {
                         <SelectItem value="2">Segundo Técnico</SelectItem>
                         <SelectItem value="3">Primero General A</SelectItem>
                         <SelectItem value="4">Primero General B</SelectItem>
-                        <SelectItem value="5">Segundo General A</SelectItem>
-                        <SelectItem value="6">Segundo General B</SelectItem>
-                        <SelectItem value="7">Noveno Grado A</SelectItem>
-                        <SelectItem value="8">Noveno Grado B</SelectItem>
-                        <SelectItem value="9">Octavo Grado A</SelectItem>
-                        <SelectItem value="10">Octavo Grado B</SelectItem>
-                        <SelectItem value="11">Séptimo Grado A</SelectItem>
-                        <SelectItem value="12">Séptimo Grado B</SelectItem>
-                        <SelectItem value="13">Sexto Grado A</SelectItem>
-                        <SelectItem value="14">Sexto Grado B</SelectItem>
+                        <SelectItem value="5">Primero General C</SelectItem>
+                        <SelectItem value="6">Segundo General A</SelectItem>
+                        <SelectItem value="7">Segundo General B</SelectItem>
+                        <SelectItem value="8">Noveno Grado A</SelectItem>
+                        <SelectItem value="9">Noveno Grado B</SelectItem>
+                        <SelectItem value="10">Octavo Grado A</SelectItem>
+                        <SelectItem value="11">Octavo Grado B</SelectItem>
+                        <SelectItem value="12">Séptimo Grado A</SelectItem>
+                        <SelectItem value="13">Séptimo Grado B</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -429,7 +446,7 @@ const CandidateManagement = () => {
                           <span className="font-medium">{candidate.name}</span>
                         </div>
                       </TableCell>
-                      <TableCell>Grade {candidate.grade}</TableCell>
+                      <TableCell>{gradeNames[candidate.grade]}</TableCell>
                       <TableCell>{candidate.votes}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex space-x-2 justify-end">

@@ -24,7 +24,7 @@ const JudgePanel = () => {
   const [showLoginDialog, setShowLoginDialog] = useState<boolean>(true);
   const [password, setPassword] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  
+
   useEffect(() => {
     // Verificar si el usuario ya estaba autenticado
     const authenticated = localStorage.getItem('judgeAuthenticated') === 'true';
@@ -33,10 +33,10 @@ const JudgePanel = () => {
       setShowLoginDialog(false);
     }
   }, []);
-  
+
   const handleLogin = () => {
     setIsLoading(true);
-    
+
     // Simular tiempo de carga
     setTimeout(() => {
       if (password === "juez123") {
@@ -68,7 +68,7 @@ const JudgePanel = () => {
     setLocation("/");
     return null;
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-6">
       <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
@@ -112,7 +112,7 @@ const JudgePanel = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {isAuthenticated && (
         <Tabs defaultValue="judge" className="w-full">
           <TabsList className="bg-white border-b border-gray-200 w-full justify-start">
@@ -130,7 +130,7 @@ const JudgePanel = () => {
               Panel de Jueces
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="judge" className="mt-6">
             <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
@@ -157,6 +157,12 @@ const JudgePanel = () => {
                   onClick={() => setActiveTab("management")}
                 >
                   Gestión de Candidatas
+                </button>
+                <button 
+                  className="py-2 px-4 rounded text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={() => window.location.reload()}
+                >
+                  Refrescar Página
                 </button>
                 <button 
                   className="py-2 px-4 rounded text-sm font-semibold bg-red-600 text-white hover:bg-red-700"

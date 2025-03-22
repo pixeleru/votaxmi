@@ -16,10 +16,12 @@ const StudentVoting = () => {
   const { toast } = useToast();
   const [hasVoted, setHasVoted] = useState(false);
 
-  // Check if the user has already voted using localStorage
   useEffect(() => {
-    const voted = localStorage.getItem('hasVoted') === 'true';
-    setHasVoted(voted);
+    let userId = localStorage.getItem('userId');
+    if (!userId || userId === "0") {
+      userId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Generar un ID único
+      localStorage.setItem('userId', userId);
+    }
   }, []);
 
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
@@ -52,17 +54,21 @@ const StudentVoting = () => {
     staleTime: 60000 // 1 minuto
   });
 
-  // Vote mutation
   const voteMutation = useMutation({
     mutationFn: async (candidateId: number) => {
+      let userId = localStorage.getItem('userId'); // Obtener el ID único del usuario
+      if (!userId) {
+        userId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`; // Generar un ID único
+        localStorage.setItem('userId', userId);
+      }
+
       return firebaseService.createVote({
         candidateId,
-        userId: Date.now(), // Generate a unique ID based on timestamp
+        userId, // Usar el ID único del usuario
         timestamp: new Date().toISOString()
       });
     },
     onSuccess: () => {
-      // Mark as voted in localStorage (already done in the service)
       setHasVoted(true);
       queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
     },
