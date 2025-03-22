@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Upload, Trash, Pencil } from "lucide-react";
+import { Upload, Trash, Pencil, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 // Extend the insertCandidateSchema for the form
@@ -33,12 +33,80 @@ const CandidateManagement = () => {
   const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
 
   // Fetch candidates
-  const { data: candidates, isLoading } = useQuery({
+  const { data: candidates, isLoading, refetch } = useQuery({
     queryKey: ['/api/results'],
     queryFn: async () => {
       return firebaseService.getCandidatesWithVotes();
     }
   });
+  
+  // Estado para los diálogos de reinicio
+  const [isResetElectionDialogOpen, setIsResetElectionDialogOpen] = useState(false);
+  const [isResetCandidatesDialogOpen, setIsResetCandidatesDialogOpen] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  
+  // Función para reiniciar elecciones (eliminar votos)
+  const handleResetElection = async () => {
+    try {
+      setIsResetting(true);
+      const success = await firebaseService.resetElection();
+      if (success) {
+        toast({
+          title: "Elecciones reiniciadas",
+          description: "Todos los votos han sido eliminados exitosamente.",
+        });
+        refetch(); // Actualizar los datos
+      } else {
+        toast({
+          title: "Error al reiniciar",
+          description: "No se pudieron eliminar los votos. Intenta nuevamente.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error resetting election:", error);
+      toast({
+        title: "Error al reiniciar",
+        description: "Ocurrió un error inesperado.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+      setIsResetElectionDialogOpen(false);
+    }
+  };
+  
+  // Función para eliminar todas las candidatas
+  const handleResetCandidates = async () => {
+    try {
+      setIsResetting(true);
+      const success = await firebaseService.resetCandidates();
+      if (success) {
+        toast({
+          title: "Candidatas eliminadas",
+          description: "Todas las candidatas han sido eliminadas exitosamente.",
+        });
+        refetch(); // Actualizar los datos
+        resetForm(); // Resetear el formulario
+      } else {
+        toast({
+          title: "Error al eliminar",
+          description: "No se pudieron eliminar las candidatas. Intenta nuevamente.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error resetting candidates:", error);
+      toast({
+        title: "Error al eliminar",
+        description: "Ocurrió un error inesperado.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetting(false);
+      setIsResetCandidatesDialogOpen(false);
+    }
+  };
 
   // Form handling
   const form = useForm<CandidateFormValues>({
@@ -285,6 +353,27 @@ const CandidateManagement = () => {
               </div>
             </form>
           </Form>
+        </div>
+        
+        {/* Admin Actions */}
+        <div className="admin-actions mb-6 flex gap-4 justify-end">
+          <Button
+            variant="outline" 
+            className="border-yellow-600 text-yellow-600 hover:bg-yellow-50"
+            onClick={() => setIsResetElectionDialogOpen(true)}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reiniciar Votación
+          </Button>
+          
+          <Button
+            variant="outline" 
+            className="border-red-600 text-red-600 hover:bg-red-50"
+            onClick={() => setIsResetCandidatesDialogOpen(true)}
+          >
+            <Trash className="h-4 w-4 mr-2" />
+            Eliminar Todas las Candidatas
+          </Button>
         </div>
         
         {/* Candidate List */}

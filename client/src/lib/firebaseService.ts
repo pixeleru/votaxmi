@@ -1,6 +1,7 @@
 import { ref, set, push, get, update, remove, query, orderByChild, equalTo } from "firebase/database";
 import { db } from "@/lib/firebase";
 import { Candidate, InsertCandidate, Vote, InsertVote } from "@shared/schema";
+import { queryClient } from "@/lib/queryClient";
 
 // Database references
 const candidatesRef = ref(db, "candidates");
@@ -316,11 +317,52 @@ export const getVotesByCandidate = async (candidateId: number): Promise<Vote[]> 
   }
 };
 
+// Función para reiniciar las elecciones (eliminar todos los votos)
+export const resetElection = async (): Promise<boolean> => {
+  try {
+    console.log("Reiniciando elecciones - eliminando todos los votos...");
+    await set(ref(db, "votes"), null); // Eliminar todos los votos
+    
+    // Eliminar el registro de voto local
+    localStorage.removeItem('hasVoted');
+    
+    // Invalidar las consultas para actualizar la interfaz
+    queryClient.invalidateQueries({ queryKey: ['/api/results'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/votes'] });
+    
+    return true;
+  } catch (error) {
+    console.error("Error al reiniciar las elecciones:", error);
+    return false;
+  }
+};
+
+// Función para limpiar todas las candidatas
+export const resetCandidates = async (): Promise<boolean> => {
+  try {
+    console.log("Eliminando todas las candidatas...");
+    await set(ref(db, "candidates"), null); // Eliminar todas las candidatas
+    
+    // Invalidar las consultas para actualizar la interfaz
+    queryClient.invalidateQueries({ queryKey: ['/api/results'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/stats'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
+    
+    return true;
+  } catch (error) {
+    console.error("Error al eliminar todas las candidatas:", error);
+    return false;
+  }
+};
+
 // Statistics
 export const getCandidatesWithVotes = async () => {
   try {
     // Get all candidates
     const candidates = await getCandidates();
+    console.log("getCandidatesWithVotes - candidates obtenidas:", candidates);
     
     // Get votes for each candidate
     const candidatesWithVotes = await Promise.all(
@@ -333,6 +375,7 @@ export const getCandidatesWithVotes = async () => {
       })
     );
     
+    console.log("candidatesWithVotes resultado:", candidatesWithVotes);
     return candidatesWithVotes;
   } catch (error) {
     console.error("Error getting candidates with votes:", error);
