@@ -9,20 +9,55 @@ const votesRef = ref(db, "votes");
 // Función auxiliar para convertir los datos de Firebase a array
 const firebaseToArray = <T>(snapshot: any, idField = 'id'): T[] => {
   const result: T[] = [];
-  if (snapshot && snapshot.exists()) {
+  
+  console.log("Procesando firebaseToArray, ¿snapshot existe?", snapshot !== null);
+  console.log("¿snapshot.exists()?", snapshot && snapshot.exists ? snapshot.exists() : "no existe método");
+  
+  if (snapshot && snapshot.exists && snapshot.exists()) {
     const data = snapshot.val();
+    console.log("Datos recibidos de Firebase:", data);
+    
     if (data) {
       Object.entries(data).forEach(([key, value]) => {
+        console.log(`Procesando entrada con key=${key}`, value);
         // Asegurarnos de que value es un objeto antes de hacer spread
         if (typeof value === 'object' && value !== null) {
-          result.push({
+          const item = {
             [idField]: Number(key) || key,
             ...(value as object)
-          } as unknown as T);
+          } as unknown as T;
+          
+          console.log("Ítem procesado:", item);
+          result.push(item);
         }
       });
     }
+  } else {
+    // Intentar obtener los datos directamente
+    console.log("Intentando obtener datos directamente de snapshot.val()...");
+    try {
+      const directData = snapshot && snapshot.val ? snapshot.val() : null;
+      
+      if (directData && typeof directData === 'object') {
+        console.log("Datos obtenidos directamente:", directData);
+        Object.entries(directData).forEach(([key, value]) => {
+          if (typeof value === 'object' && value !== null) {
+            const item = {
+              [idField]: Number(key) || key,
+              ...(value as object)
+            } as unknown as T;
+            
+            console.log("Ítem procesado (método alternativo):", item);
+            result.push(item);
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error al procesar datos directamente:", error);
+    }
   }
+  
+  console.log("Resultado final de firebaseToArray:", result);
   return result;
 };
 
@@ -234,8 +269,7 @@ export const createVote = async (vote: InsertVote): Promise<Vote> => {
     
     return {
       id: newId,
-      ...voteData,
-      timestamp: new Date()
+      ...voteData
     } as Vote;
   } catch (error) {
     console.error("Error adding vote:", error);

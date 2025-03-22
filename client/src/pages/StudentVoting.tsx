@@ -32,12 +32,24 @@ const StudentVoting = () => {
   const { data: candidates, isLoading: isLoadingCandidates } = useQuery({
     queryKey: [selectedGrade ? `/api/candidates?grade=${selectedGrade}` : '/api/candidates'],
     queryFn: async () => {
-      if (selectedGrade) {
-        return firebaseService.getCandidatesByGrade(selectedGrade);
-      } else {
-        return firebaseService.getCandidates();
+      try {
+        console.log("Fetching candidates...");
+        let result;
+        if (selectedGrade) {
+          result = await firebaseService.getCandidatesByGrade(selectedGrade);
+        } else {
+          result = await firebaseService.getCandidates();
+        }
+        console.log("Candidates fetched:", result);
+        return result;
+      } catch (error) {
+        console.error("Error fetching candidates:", error);
+        return [];
       }
-    }
+    },
+    // Desactivar refetching automático para solucionar problemas de parpadeo
+    refetchOnWindowFocus: false, 
+    staleTime: 60000 // 1 minuto
   });
 
   // Vote mutation
