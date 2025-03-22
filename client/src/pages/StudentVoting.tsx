@@ -10,6 +10,7 @@ import { Candidate } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
+import * as firebaseService from "@/lib/firebaseService";
 
 const StudentVoting = () => {
   const { toast } = useToast();
@@ -30,39 +31,33 @@ const StudentVoting = () => {
   // Fetch candidates
   const { data: candidates, isLoading: isLoadingCandidates } = useQuery({
     queryKey: [selectedGrade ? `/api/candidates?grade=${selectedGrade}` : '/api/candidates'],
+    queryFn: async () => {
+      if (selectedGrade) {
+        return firebaseService.getCandidatesByGrade(selectedGrade);
+      } else {
+        return firebaseService.getCandidates();
+      }
+    }
   });
 
   // Vote mutation
   const voteMutation = useMutation({
     mutationFn: async (candidateId: number) => {
-      const response = await fetch('/api/votes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          candidateId,
-          // Using a temporary user ID since we're not requiring login
-          userId: Date.now() // Generate a unique ID based on timestamp
-        }),
+      return firebaseService.createVote({
+        candidateId,
+        userId: Date.now(), // Generate a unique ID based on timestamp
+        timestamp: new Date().toISOString()
       });
-      
-      if (!response.ok) {
-        throw new Error('Failed to cast vote');
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
-      // Mark as voted in localStorage
-      localStorage.setItem('hasVoted', 'true');
+      // Mark as voted in localStorage (already done in the service)
       setHasVoted(true);
       queryClient.invalidateQueries({ queryKey: ['/api/candidates'] });
     },
     onError: (error) => {
       toast({
-        title: "Vote failed",
-        description: error instanceof Error ? error.message : "Failed to cast your vote",
+        title: "Error en la votación",
+        description: error instanceof Error ? error.message : "No se pudo registrar tu voto",
         variant: "destructive",
       });
     }

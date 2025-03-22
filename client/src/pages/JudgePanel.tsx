@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import ResultsSection from "@/components/ResultsSection";
@@ -7,21 +6,9 @@ import CandidateManagement from "@/components/CandidateManagement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const JudgePanel = () => {
-  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("results");
-
-  // Redirect if not a judge
-  if (!user || user.role !== "judge") {
-    toast({
-      title: "Access denied",
-      description: "You need to be logged in as a judge to access this page",
-      variant: "destructive",
-    });
-    setLocation("/");
-    return null;
-  }
 
   return (
     <div className="container mx-auto px-4 py-6">
